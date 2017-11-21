@@ -1,7 +1,5 @@
 package com.dawuzi.digitunraveller;
 
-import java.util.List;
-
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -45,10 +43,7 @@ public class DigitCoreHandlerTest {
 	@Test
 	public void testAllPermutations(){
 		
-		Digits digits = new Digits(" 0");
 		DigitCoreHandler digitCoreHandler = new DigitCoreHandler();
-		
-		List<Digits> allPermutations = digitCoreHandler.getAllPermutations(digits);
 		
 		int[][] testCases = {
 				{0, 3},
@@ -96,7 +91,7 @@ public class DigitCoreHandlerTest {
 		int[][] testCases = {
 				{0, 3, 10},
 				{1, 1, 3},
-				{2, 1, 2},
+				{2, 2, 2},
 //				{3, 2},
 //				{4, 2},
 //				{5, 2},
@@ -141,5 +136,41 @@ public class DigitCoreHandlerTest {
 		Assert.assertEquals(val, digits2.getValue());
 		
 	}
-	
+
+	@Test
+	public void testGetHighestValues(){
+		
+//		value, number of moves, expected highest value
+//		you can add more test cases here
+		int[][] testCases = {
+				{0, 3, 77},
+				{5008, 2, 15005},
+				{2, 1, 3},
+		};
+		
+		DigitCoreHandler digitCoreHandler = new DigitCoreHandler();
+		
+		for(int[] testCase : testCases){
+			
+			int value = testCase[0];
+			int noOfMoves = testCase[1];
+			int expected = testCase[2];
+			
+			Integer actualInteger = digitCoreHandler.getHighestValueIncludingFormationOfNewDigit(value, noOfMoves);
+			int actual = 0;
+			
+			if(actualInteger != null){
+				actual = actualInteger;
+			}
+
+			Assert.assertEquals(expected, actual);
+			
+			System.out.println("value : "+testCase[0]
+					+", no of moves : "+testCase[1]+", Expected highest value : "+testCase[2]
+					+", Actual : "+digitCoreHandler.getHighestValueIncludingFormationOfNewDigit(value, noOfMoves) 
+							);
+		}
+		
+		
+	}	
 }

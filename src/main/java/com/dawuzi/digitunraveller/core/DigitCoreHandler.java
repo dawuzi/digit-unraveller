@@ -3,7 +3,6 @@ package com.dawuzi.digitunraveller.core;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +23,31 @@ import com.dawuzi.digitunraveller.model.Digits;
 public class DigitCoreHandler {
 	
 	public Map<String, List<Digits>> permutationsMemory = new ConcurrentHashMap<>();
+	
+	public Integer getHighestValueIncludingFormationOfNewDigit(int value, int noOfMoves){
+		Set<Integer> results = getHighestValueIncludingFormationOfNewDigit(value, noOfMoves, 1);
+		if(results == null || results.isEmpty()){
+			return null;
+		}
+		return results.iterator().next();
+	}
+	
+	public Set<Integer> getHighestValueIncludingFormationOfNewDigit(int value, int noOfMoves, int resultCount){
+		
+		String blanksInFrontValue = getBlankString(value, noOfMoves);
+		
+		List<Digits> digits = getAllPermutations(new Digits(blanksInFrontValue), noOfMoves, resultCount);
+		
+		TreeSet<Integer> result = new TreeSet<>(Collections.reverseOrder());
+		
+		int size = digits.size();
+		
+		for(int x=0; x<size; x++){
+			result.add(digits.get(x).getValue());
+		}
+		
+		return result;
+	}
 
 	public Integer getHighestValue(int value, int noOfMovements){
 		Set<Integer> highestValues = getHighestValues(value, noOfMovements, 1);
@@ -162,10 +186,10 @@ public class DigitCoreHandler {
 	}
 	
 	public List<Digits> getAllPermutations(Digits digits, int noOfMoves) {
-		return getAllPermutations(digits, noOfMoves, false, 5);
+		return getAllPermutations(digits, noOfMoves, 5);
 	}
 	
-	public List<Digits> getAllPermutations(Digits digits, int noOfMoves, boolean keepInvalidDigits, int maxHighestCount) {
+	public List<Digits> getAllPermutations(Digits digits, int noOfMoves, int maxHighestCount) {
 		
 		StringBuffer keyBuffer = new StringBuffer(digits.getRawBinaryStringValue());
 		
@@ -202,7 +226,7 @@ public class DigitCoreHandler {
 					digits.swapDigitBar(x, y);
 					
 					if(noOfMoves == 1){
-						if(keepInvalidDigits || digits.getValue() >= 0){
+						if(digits.getValue() >= 0){
 							resultValueStrings.add(digits.getRawBinaryStringValue());
 						} 
 					} else {
@@ -223,7 +247,7 @@ public class DigitCoreHandler {
 		
 		if(!resultValueStrings.isEmpty()){
 			
-			results = new ArrayList<>();
+			results = new ArrayList<>(resultValueStrings.size());
 			
 			for(String val : resultValueStrings){
 				Digits localDigits = new Digits();
@@ -237,6 +261,19 @@ public class DigitCoreHandler {
 		}
 		
 		digits.initViaRawBinaryString(initialBinaryRawValue); 
+		
+		if(!results.isEmpty() && results.size() > maxHighestCount){
+			
+			Collections.sort(results, Collections.reverseOrder());
+			
+			List<Digits> temp = new ArrayList<>();
+			
+			for(int x=0; x<maxHighestCount; x++){
+				temp.add(results.get(x));
+			}
+			
+			results = temp;
+		}
 		
 		permutationsMemory.put(key, results);
 		
@@ -325,16 +362,16 @@ public class DigitCoreHandler {
 		
 //		List<Digits> allDigitPermutations = coreHandler.getAllPermutations(digits);
 		
-		int noOfMovements = 3;
+		int noOfMovements = 2;
 		
 		for(int x=0; x<1; x++){
 			
-			String blankString = coreHandler.getBlankString(5008, noOfMovements);
+			String blankString = coreHandler.getBlankString(3, noOfMovements);
 			
 			System.out.println("blankString : -"+blankString+"-");
 			
-//			Digits localDigits = new Digits(blankString);
-			Digits localDigits = new Digits(5008);
+			Digits localDigits = new Digits(blankString);
+//			Digits localDigits = new Digits(5008);
 			
 			System.out.println(localDigits.getRawBinaryStringValue());
 			

@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -22,7 +23,7 @@ import com.dawuzi.digitunraveller.model.Digits;
 
 public class DigitCoreHandler {
 	
-	public Map<String, List<Digits>> permutationsMemory = new HashMap<>();
+	public Map<String, List<Digits>> permutationsMemory = new ConcurrentHashMap<>();
 
 	public Integer getHighestValue(int value, int noOfMovements){
 		Set<Integer> highestValues = getHighestValues(value, noOfMovements, 1);
@@ -33,7 +34,45 @@ public class DigitCoreHandler {
 	}
 	
 	public Set<Integer> getHighestValues(int value, int noOfMovements, int resultCount){
-		return getHighestValues(new Digits(value), noOfMovements, resultCount);
+		
+		String blanksInFrontValue = getBlankString(value, noOfMovements);
+		
+		return getHighestValues(new Digits(blanksInFrontValue), noOfMovements, resultCount);
+	}
+
+	public String getBlankString(int value) {
+		return getBlankString(value, Integer.MAX_VALUE);
+	}
+	
+	public String getBlankString(int value, int noOfMovements) {
+		
+		Digits digits = new Digits(value);
+		
+		int y = 0;
+		int normalizedMaxSize = 7 * digits.getDigitCount();
+		
+		for(int x=0; x<normalizedMaxSize; x++){
+			if(digits.getDigitBar(x)){
+				y++;
+			}
+		}
+		
+		int count = y / 2;
+		
+		int noOfPrependedBlanks = count - digits.getDigitCount();
+		int maxOfBlankSpaces = noOfMovements / 2;
+		
+		int targetBlankValue = Math.min(noOfPrependedBlanks, maxOfBlankSpaces);
+		
+		StringBuffer buffer = new StringBuffer();
+		
+		for(int x=0; x<targetBlankValue; x++){
+			buffer.append(' ');
+		}
+		
+		buffer.append(value);
+		
+		return buffer.toString();
 	}
 
 	private TreeSet<Integer> getHighestValues(Digits digits, int noOfMovements, int resultCount) {
@@ -116,10 +155,25 @@ public class DigitCoreHandler {
 		
 		return results;
 	}
-
-	private List<Digits> getAllPermutations(Digits digits) {
+	
+	
+	public List<Digits> getAllPermutations(Digits digits) {
+		return getAllPermutations(digits, 1);
+	}
+	
+	public List<Digits> getAllPermutations(Digits digits, int noOfMoves) {
+		return getAllPermutations(digits, noOfMoves, false, 5);
+	}
+	
+	public List<Digits> getAllPermutations(Digits digits, int noOfMoves, boolean keepInvalidDigits, int maxHighestCount) {
 		
-		List<Digits> cachedResult = permutationsMemory.get(digits.getStringValue());
+		StringBuffer keyBuffer = new StringBuffer(digits.getRawBinaryStringValue());
+		
+		keyBuffer.append('&').append(noOfMoves);
+		
+		String key = keyBuffer.toString();
+		
+		List<Digits> cachedResult = permutationsMemory.get(key);
 		
 		if(cachedResult != null){
 			return cachedResult;
@@ -132,13 +186,13 @@ public class DigitCoreHandler {
 		}
 		
 		Set<String> resultValueStrings = new HashSet<>();
-		String initialValue = digits.getStringValue(); 
+		String initialBinaryRawValue = digits.getRawBinaryStringValue(); 
 		
 		for(int x=0; x<normalizedLength; x++){
 			
 			for(int y=x+1; y<normalizedLength; y++){
 				
-				digits.initDigits(initialValue); 
+				digits.initViaRawBinaryString(initialBinaryRawValue);
 			
 				boolean digitBar = digits.getDigitBar(x);
 				boolean digitBar2 = digits.getDigitBar(y);
@@ -147,8 +201,19 @@ public class DigitCoreHandler {
 					
 					digits.swapDigitBar(x, y);
 					
-					if(digits.getValue() >= 0){
-						resultValueStrings.add(digits.getStringValue());
+					if(noOfMoves == 1){
+						if(keepInvalidDigits || digits.getValue() >= 0){
+							resultValueStrings.add(digits.getRawBinaryStringValue());
+						} 
+					} else {
+							
+						List<Digits> allPermutations = getAllPermutations(digits, noOfMoves - 1);
+						
+						for(Digits localDigits : allPermutations){
+							if(localDigits.getValue() >= 0){
+								resultValueStrings.add(localDigits.getRawBinaryStringValue());
+							}
+						}
 					}
 				}
 			}
@@ -161,15 +226,19 @@ public class DigitCoreHandler {
 			results = new ArrayList<>();
 			
 			for(String val : resultValueStrings){
-				results.add(new Digits(val));
+				Digits localDigits = new Digits();
+				
+				localDigits.initViaRawBinaryString(val);
+				
+				results.add(localDigits);
 			}
 		} else {
 			results = Collections.emptyList();
 		}
 		
-		digits.initDigits(initialValue); 
+		digits.initViaRawBinaryString(initialBinaryRawValue); 
 		
-		permutationsMemory.put(digits.getStringValue(), results);
+		permutationsMemory.put(key, results);
 		
 		return results;
 	}
@@ -198,7 +267,7 @@ public class DigitCoreHandler {
 	}
 	
 	public static void main(String[] args) {
-		test5();
+		test();
 	}
 	
 	public static void test5() {
@@ -252,27 +321,41 @@ public class DigitCoreHandler {
 
 	public static void test() {
 		
-		Digits digits = new Digits(1);
-		
 		DigitCoreHandler coreHandler = new DigitCoreHandler();
 		
-		List<Digits> allDigitPermutations = coreHandler.getAllPermutations(digits);
+//		List<Digits> allDigitPermutations = coreHandler.getAllPermutations(digits);
 		
-		for(int x=0; x<20; x++){
-			Digits localDigits = new Digits(x);
+		int noOfMovements = 3;
+		
+		for(int x=0; x<1; x++){
 			
-			List<Digits> allPermutations = coreHandler.getAllPermutations(localDigits);
+			String blankString = coreHandler.getBlankString(5008, noOfMovements);
+			
+			System.out.println("blankString : -"+blankString+"-");
+			
+//			Digits localDigits = new Digits(blankString);
+			Digits localDigits = new Digits(5008);
+			
+			System.out.println(localDigits.getRawBinaryStringValue());
+			
+			List<Digits> allPermutations = coreHandler.getAllPermutations(localDigits, noOfMovements);
+			
 			System.out.println("x : "+x);
+			
+			allPermutations.sort(Collections.reverseOrder());
+			
 			for(Digits permutationDigits : allPermutations){
 				System.out.println("permutationDigits value : "+permutationDigits.getStringValue());
 			}
+			
+			System.out.println("============================================================================");
 		}
 		
-		for(Digits localDigits : allDigitPermutations){
-			System.out.println("localDigits value : "+localDigits.getStringValue());
-		}
-		
-		System.out.println("done");
+//		for(Digits localDigits : allDigitPermutations){
+//			System.out.println("localDigits value : "+localDigits.getStringValue());
+//		}
+//		
+//		System.out.println("done");
 	}
 
 }

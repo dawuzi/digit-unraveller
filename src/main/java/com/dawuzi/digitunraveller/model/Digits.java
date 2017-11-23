@@ -10,6 +10,9 @@ import java.util.Arrays;
 public class Digits implements Comparable<Digits> {
 	
 	private SingleDigit[] digits;
+	
+	public Digits(){
+	}
 
 	public Digits(int value) {
 		initDigits(value);
@@ -17,6 +20,30 @@ public class Digits implements Comparable<Digits> {
 
 	public Digits(String value) {
 		initDigits(value);
+	}
+	
+	public void initViaRawBinaryString(String rawBinaryString){
+		if((rawBinaryString.length() % 7) != 0){
+			throw new IllegalArgumentException("rawBinaryString length must be a multiple of 7");
+		}
+		int length = rawBinaryString.length();
+		
+		int digitLength = length / 7;
+		
+		if(digits == null || digits.length != digitLength){
+			digits = new SingleDigit[digitLength];
+		}
+		
+		for(int x=0,y=0; y<digitLength; x+=7, y++){
+			
+			SingleDigit digit = digits[y];
+			if(digit == null){
+				digit = new SingleDigit();
+				digits[y] = digit;
+			}
+			
+			digit.reInitWithRawBinaryString(rawBinaryString.substring(x, x+7));
+		}
 	}
 
 	public void initDigits(String value) {
@@ -26,7 +53,7 @@ public class Digits implements Comparable<Digits> {
 		}
 		
 		for(int x = 0; x<value.length(); x++){
-			digits[x] = new SingleDigit(Integer.parseInt(value.substring(x, (x+1))));
+			digits[x] = new SingleDigit(value.substring(x, (x+1)));
 		}
 	}
 	
@@ -35,24 +62,68 @@ public class Digits implements Comparable<Digits> {
 	}
 	
 	public int getValue(){
-		return Integer.parseInt(getStringValue());
+		
+		String stringValue = getStringValue();
+		
+		if(stringValue.contains(" ")){
+			stringValue = stringValue.trim();
+		}
+		
+		if(stringValue.isEmpty()){
+			return -1;
+		}
+		
+		return Integer.parseInt(stringValue);
 	}
 	
 	public String getStringValue(){
-		String val = "";
+//		String val = "";
+		StringBuffer val = new StringBuffer();
+		
+		boolean firstNonBlankDigitFound = false;
 		
 		for(int x=0; x<digits.length; x++){
 			
-			int value = digits[x].getValue();
+			SingleDigit digit = digits[x];
+			
+			if(!digit.isBlank()){
+				firstNonBlankDigitFound = true;
+			} else {
+				if(firstNonBlankDigitFound){
+					return "-1";
+				} else {
+//					val += " ";
+					val.append(" ");
+					continue;
+				}
+			}
+			
+			int value = digit.getValue();
 			
 			if(value < 0){
 				return "-1";
 			}
 			
-			val += value;
+//			val += value;
+			val.append(value);
 		}
 		
-		return val;
+//		return val;
+		return val.toString();
+	}
+	
+	public String getRawBinaryStringValue(){
+		
+		StringBuffer val = new StringBuffer();
+		
+		for(int x=0; x<digits.length; x++){
+			
+			SingleDigit digit = digits[x];
+		
+			val.append(digit.getRawBinaryStringValue());
+		}
+		
+		return val.toString();
 	}
 	
 	public int getDigitCount(){
@@ -106,6 +177,11 @@ public class Digits implements Comparable<Digits> {
 		}
 	}
 	
+	public SingleDigit getSingleDigit(int digitIndex){
+		validateValue(digitIndex, getDigitCount() - 1);
+		return digits[digitIndex];
+	}
+	
 	private void validateValue(int value, int max) {
 		if(value < 0 || value > max){
 			throw new IllegalArgumentException("value must be between 0 and "+max);
@@ -140,6 +216,11 @@ public class Digits implements Comparable<Digits> {
 		if (!Arrays.equals(digits, other.digits))
 			return false;
 		return true;
+	}
+
+	@Override
+	public String toString() {
+		return getStringValue();
 	}
 
 	public static void main(String[] args) {

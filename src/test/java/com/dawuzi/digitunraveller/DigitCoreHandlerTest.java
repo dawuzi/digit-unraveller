@@ -146,6 +146,7 @@ public class DigitCoreHandlerTest {
 				{0, 3, 77},
 				{5008, 2, 15005},
 				{2, 1, 3},
+				{99, 9, 100},
 		};
 		
 		DigitCoreHandler digitCoreHandler = new DigitCoreHandler();

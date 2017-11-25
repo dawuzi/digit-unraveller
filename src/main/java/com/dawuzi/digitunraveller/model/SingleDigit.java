@@ -143,6 +143,21 @@ public class SingleDigit implements Comparable<SingleDigit> {
 		return -1;
 	}
 	
+	public char getCharValue(){
+		
+		if(isBlank()){
+			return ' ';
+		}
+		
+		int value = getValue();
+		
+		if(value >= 0){
+			return Character.forDigit(value, 10);
+		}
+		
+		return '&';
+	}
+	
 	public String getRawBinaryStringValue(){
 		int value = getValue();
 		

@@ -24,6 +24,10 @@ public class DigitCoreHandler {
 	
 	public Map<String, List<Digits>> permutationsMemory = new ConcurrentHashMap<>();
 	
+	public Map<String, List<Digits>> permutationsMemoryParallel = new ConcurrentHashMap<>();
+	public Map<String, List<Digits>> permutationsMemoryParallelIncludingInvalids = new ConcurrentHashMap<>();
+	
+	
 	public Integer getHighestValueIncludingFormationOfNewDigit(int value, int noOfMoves){
 		Set<Integer> results = getHighestValueIncludingFormationOfNewDigit(value, noOfMoves, 1);
 		if(results == null || results.isEmpty()){
@@ -191,6 +195,23 @@ public class DigitCoreHandler {
 	
 	public List<Digits> getAllPermutations(Digits digits, int noOfMoves, int maxHighestCount) {
 		
+		int digitCount = digits.getDigitCount();
+		int noOfBlanks = 0;
+		
+		for(int x=0; x<digitCount; x++){
+			
+			if(digits.getSingleDigit(x).isBlank()){
+				noOfBlanks++;
+			} else {
+				break;
+			}
+		}
+		
+		return getAllPermutations(digits, noOfMoves, maxHighestCount, noOfBlanks);
+	}
+	
+	public List<Digits> getAllPermutations(Digits digits, int noOfMoves, int maxHighestCount, int noOfBlanks) {
+		
 		StringBuffer keyBuffer = new StringBuffer(digits.getRawBinaryStringValue());
 		
 		keyBuffer.append('&').append(noOfMoves);
@@ -227,11 +248,14 @@ public class DigitCoreHandler {
 					
 					if(noOfMoves == 1){
 						if(digits.getValue() >= 0){
+							
+							List<Digits> allValidRotations = getAllValidRotations(digits, noOfBlanks);
+							
 							resultValueStrings.add(digits.getRawBinaryStringValue());
 						} 
 					} else {
 							
-						List<Digits> allPermutations = getAllPermutations(digits, noOfMoves - 1);
+						List<Digits> allPermutations = getAllPermutations(digits, noOfMoves - 1, maxHighestCount, noOfBlanks);
 						
 						for(Digits localDigits : allPermutations){
 							if(localDigits.getValue() >= 0){
@@ -280,6 +304,127 @@ public class DigitCoreHandler {
 		return results;
 	}
 
+	private List<Digits> getAllValidRotations(Digits digits, int noOfBlanks) {
+		
+		String stringValue = digits.getStringValue();
+		
+		
+		
+		return null;
+	}
+
+	public List<Digits> getAllPermutationsInParallel(Digits digits, int noOfMoves, 
+			int maxHighestCount){
+		return getAllPermutationsInParallel(digits, noOfMoves, maxHighestCount, false);
+	}	
+	
+	public List<Digits> getAllPermutationsInParallel(Digits digits, int noOfMoves, 
+			int maxHighestCount, boolean addInvalidNumbers) {
+		
+		StringBuffer keyBuffer = new StringBuffer(digits.getRawBinaryStringValue());
+		
+		keyBuffer.append('&').append(noOfMoves);
+		
+		String key = keyBuffer.toString();
+		
+		List<Digits> cachedResult = getParallelCachedResult(key, addInvalidNumbers);
+		
+		if(cachedResult != null){
+			return cachedResult;
+		}
+		
+		int normalizedLength = digits.getDigitCount() * 7;
+		
+		if(normalizedLength <= 0){
+			Collections.emptyList();
+		}
+		
+		Set<String> resultValueStrings = new HashSet<>();
+		String initialBinaryRawValue = digits.getRawBinaryStringValue(); 
+		
+		for(int x=0; x<normalizedLength; x++){
+			
+			for(int y=x+1; y<normalizedLength; y++){
+				
+				digits.initViaRawBinaryString(initialBinaryRawValue);
+			
+				boolean digitBar = digits.getDigitBar(x);
+				boolean digitBar2 = digits.getDigitBar(y);
+				
+				if(digitBar != digitBar2){
+					
+					digits.swapDigitBar(x, y);
+					
+					if(noOfMoves == 1){
+						if(digits.getValue() >= 0 || addInvalidNumbers){
+							resultValueStrings.add(digits.getRawBinaryStringValue());
+						} 
+					} else {
+							
+						List<Digits> allPermutations = getAllPermutations(digits, noOfMoves - 1);
+						
+						for(Digits localDigits : allPermutations){
+							if(localDigits.getValue() >= 0){
+								resultValueStrings.add(localDigits.getRawBinaryStringValue());
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		List<Digits> results;
+		
+		if(!resultValueStrings.isEmpty()){
+			
+			results = new ArrayList<>(resultValueStrings.size());
+			
+			for(String val : resultValueStrings){
+				Digits localDigits = new Digits();
+				
+				localDigits.initViaRawBinaryString(val);
+				
+				results.add(localDigits);
+			}
+		} else {
+			results = Collections.emptyList();
+		}
+		
+		digits.initViaRawBinaryString(initialBinaryRawValue); 
+		
+		if(!results.isEmpty() && results.size() > maxHighestCount){
+			
+			Collections.sort(results, Collections.reverseOrder());
+			
+			List<Digits> temp = new ArrayList<>();
+			
+			for(int x=0; x<maxHighestCount; x++){
+				temp.add(results.get(x));
+			}
+			
+			results = temp;
+		}
+		
+		putResults(key, addInvalidNumbers, results);
+		
+		return results;
+	}
+
+	private void putResults(String key, boolean addInvalidNumbers, List<Digits> results) {
+		if(addInvalidNumbers){
+			permutationsMemoryParallel.put(key, results);
+		} else {
+			permutationsMemoryParallelIncludingInvalids.put(key, results);
+		}
+	}
+
+	private List<Digits> getParallelCachedResult(String key, boolean addInvalidNumbers) {
+		if(addInvalidNumbers){
+			return permutationsMemoryParallelIncludingInvalids.get(key);
+		} else {
+			return permutationsMemoryParallel.get(key);
+		}
+	}
 
 	private void purgeCurrentResults(TreeSet<Integer> results, int resultCount) {
 		if(results.size() <= resultCount){

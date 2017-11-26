@@ -15,7 +15,7 @@ import com.dawuzi.digitunraveller.pojos.DigitExtraInfoResult;
 
 public class DigitCoreHandlerTest {
 
-//	@Test
+	@Test
 	public void test(){
 		DigitCoreHandler coreHandler = new DigitCoreHandler();
 		
@@ -26,7 +26,7 @@ public class DigitCoreHandlerTest {
 		
 	}
 	
-//	@Test
+	@Test
 	public void test2(){
 		Digits digits = new Digits(" 22");
 		
@@ -42,7 +42,7 @@ public class DigitCoreHandlerTest {
 		System.out.println("stringValue : -"+stringValue+"- : "+digits.getValue());
 	}
 
-//	@Test
+	@Test
 	public void testAllPermutations(){
 		
 		DigitCoreHandler digitCoreHandler = new DigitCoreHandler();
@@ -85,7 +85,7 @@ public class DigitCoreHandlerTest {
 		}
 	}
 	
-//	@Test
+	@Test
 	public void testAllPermutationsWithNoOfMoves(){
 
 		DigitCoreHandler digitCoreHandler = new DigitCoreHandler();
@@ -116,7 +116,7 @@ public class DigitCoreHandlerTest {
 		}
 	}	
 	
-//	@Test
+	@Test
 	public void testRawBinaryStringValues(){
 		
 		int val = 12;
@@ -139,7 +139,7 @@ public class DigitCoreHandlerTest {
 		
 	}
 
-//	@Test
+	@Test
 	public void testGetHighestValues(){
 		
 //		value, number of moves, expected highest value
@@ -218,6 +218,7 @@ public class DigitCoreHandlerTest {
 	}	
 	
 //	@Test
+	@SuppressWarnings("unused")
 	public void testGetHighestValuesByAdditionOrRearrangement(){
 		
 		DigitCoreHandler digitCoreHandler = new DigitCoreHandler();
@@ -255,7 +256,7 @@ public class DigitCoreHandlerTest {
 		}
 	}	
 	
-//	@Test
+	@Test
 	public void testIsDigitAllOnes(){
 		
 		DigitCoreHandler digitCoreHandler = new DigitCoreHandler();

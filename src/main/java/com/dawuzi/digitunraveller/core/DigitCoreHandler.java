@@ -33,32 +33,9 @@ public class DigitCoreHandler {
 		Digits digits = getHighestDigitsViaDeletion(new Digits(value), noOfMoves);
 		return digits.getValue();
 	}
-//	
-//	public Set<Long> getHighestViaDigitRemoval(int value, int noOfMoves, int resultCount) {
-//		
-//		int noOfPossibleExtraDigits = getNoOfPossibleExtraDigits(value, noOfMoves);
-//		
-//		int noOfOnesThatCanBeFormed = 2 * noOfPossibleExtraDigits;
-//		
-//		Digits startDigits = new Digits(value);
-//		
-//		List<Digits> digits = getHighestDigitsViaDeletion(startDigits, noOfMoves);
-//		
-//		TreeSet<Long> result = new TreeSet<>(Collections.reverseOrder());
-//		
-//		int size = digits.size();
-//		
-//		for(int x=0; x<size; x++){
-//			result.add(digits.get(x).getValue());
-//		}
-//		
-//		return result;
-//	}
 
 	private Digits getHighestDigitsViaDeletion(Digits digits, int noOfMoves) {
 
-		String rawBinaryStringValue = digits.getRawBinaryStringValue();
-		
 		if(isDigitAllOnes(digits)){
 			return digits;
 		}
@@ -626,8 +603,6 @@ public class DigitCoreHandler {
 					if(noOfMoves == 1){
 						if(digits.getValue() >= 0){
 							
-//							List<Digits> allValidRotations = getAllValidRotations(digits, noOfBlanks);
-							
 							resultValueStrings.add(digits.getRawBinaryStringValue());
 						} 
 					} else {
@@ -679,15 +654,6 @@ public class DigitCoreHandler {
 		permutationsMemory.put(key, results);
 		
 		return results;
-	}
-
-	private List<Digits> getAllValidRotations(Digits digits, int noOfBlanks) {
-		
-		String stringValue = digits.getStringValue();
-		
-		
-		
-		return null;
 	}
 
 	public List<Digits> getAllPermutationsInParallel(Digits digits, int noOfMoves, 

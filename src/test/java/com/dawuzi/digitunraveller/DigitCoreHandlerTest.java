@@ -185,16 +185,22 @@ public class DigitCoreHandlerTest {
 				{396740, 10, 795111},
 				{46, 3, 751},
 				{5008, 2, 50051},
-				{2, 2, 751},
-//				{5008, 2, 751},
+				{2, 2, 5},
+				{8, 4, 711},
+				{8, 5, 711},
+				{8, 6, 711},
+				{8, 7, 711},
+				{8, 8, 711},
+				{8, 9, 711},
+				{46, 4, 751},
+				{46, 5, 751},
+				{46, 6, 751},
 //				{5008, 2, 751},
 		};
 		
 		System.out.println("testcase length : "+testCases.length);
 		
 		for(int x=0; x<testCases.length; x++){
-			
-			System.out.println("x : "+x);
 			
 			int[] testCase = testCases[x];
 			
@@ -203,7 +209,7 @@ public class DigitCoreHandlerTest {
 			
 			Long highestViaDigitRemoval = digitCoreHandler.getHighestViaDigitRemoval(value, noOfMoves);
 			
-			System.out.println("value : "+value+", noOfMoves : "+noOfMoves+", highest : "+highestViaDigitRemoval);
+			System.out.println("x : "+x+", value : "+value+", noOfMoves : "+noOfMoves+", highest : "+highestViaDigitRemoval);
 		}
 		
 		Assert.assertTrue(true);
@@ -249,7 +255,7 @@ public class DigitCoreHandlerTest {
 		}
 	}	
 	
-	@Test
+//	@Test
 	public void testIsDigitAllOnes(){
 		
 		DigitCoreHandler digitCoreHandler = new DigitCoreHandler();

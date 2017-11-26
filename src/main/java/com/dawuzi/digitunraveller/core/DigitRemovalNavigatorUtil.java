@@ -21,6 +21,20 @@ public class DigitRemovalNavigatorUtil {
 			{{5,1}, {4,2}, {3,1}, {1,4}},		//9
 	};
 	
+	public int[][][] digitNavigatorViaRemovalOrderedByNoOfBarsDesc = {
+			//new digit, no of bar removal required
+			{{1,4}, {7,3}},	//0
+			{},				//1
+			{},				//2
+			{{1,3}, {7,2}},	//3
+			{{1,2}},		//4
+			{},				//5
+			{{5,1}},		//6
+			{{1,1}},		//7
+			{{1,5}, {7,4}, {4,3}, {5,2}, {3,2}, {2,2}, {9,1}, {6,1}, {0,1}},		//8
+			{{1,4}, {4,2}, {5,1}, {3,1}},		//9
+	};
+	
 	public int[][][] digitNavigatorViaRearranging = {
 			//new digit, no of bar switch required
 			{{9,1}, {6,1}},	//0
@@ -66,6 +80,10 @@ public class DigitRemovalNavigatorUtil {
 	public int[][] getPossibleDigitsViaRemoval(int number){
 		validateValue(number, 9);
 		return digitNavigatorViaRemoval[number];
+	}
+	public int[][] getPossibleDigitsViaRemovalOrderedByNoOfBarsDesc(int number){
+		validateValue(number, 9);
+		return digitNavigatorViaRemovalOrderedByNoOfBarsDesc[number];
 	}
 	public int[][] getPossibleDigitsViaRearranging(int number){
 		validateValue(number, 9);

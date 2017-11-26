@@ -77,7 +77,6 @@ public class Digits implements Comparable<Digits> {
 	}
 	
 	public String getStringValue(){
-//		String val = "";
 		StringBuffer val = new StringBuffer();
 		
 		boolean firstNonBlankDigitFound = false;
@@ -92,7 +91,6 @@ public class Digits implements Comparable<Digits> {
 				if(firstNonBlankDigitFound){
 					return "-1";
 				} else {
-//					val += " ";
 					val.append(" ");
 					continue;
 				}
@@ -104,11 +102,9 @@ public class Digits implements Comparable<Digits> {
 				return "-1";
 			}
 			
-//			val += value;
 			val.append(value);
 		}
 		
-//		return val;
 		return val.toString();
 	}
 	

@@ -63,74 +63,97 @@ public class DigitCoreHandler {
 			return digits;
 		}
 		
-		DigitExtraInfoResult digitExtraInfoResult = getMaxResultViaDeletionForwardDirection(digits, noOfMoves);
+		int noOfBarsRemoved = 0;
+		int currentNoOfMoves = noOfMoves;
+		Digits newDigits = digits;
 		
-		System.out.println("here digitExtraInfoResult : "+digitExtraInfoResult);
-		
-		int currentNoOfMoves = digitExtraInfoResult.getCurrentNoOfMoves();
-		int noOfBarsRemoved = digitExtraInfoResult.getNoOfBarsRemoved();
-		Digits newDigits = digitExtraInfoResult.getDigits();
-		
-		if(currentNoOfMoves == 0 && noOfBarsRemoved%2 == 0){
-			return getMaxDigits(newDigits, noOfBarsRemoved);
-		}
-		
-		if(currentNoOfMoves == 0){
-			if(noOfBarsRemoved%2 == 0){
-				return getMaxDigits(newDigits, noOfBarsRemoved);
-			} else {
-				DigitExtraInfoResult additionIncreasedDigit = increaseDigitByAdditionOrRearranging(newDigits, 1);
-				
-				Digits increasedDigits = additionIncreasedDigit.getDigits();
+		while(true){
 
-				return getMaxDigits(increasedDigits, noOfBarsRemoved, !additionIncreasedDigit.isAltered());
+			DigitExtraInfoResult digitExtraInfoResult = getMaxResultViaDeletionForwardDirection(newDigits, currentNoOfMoves);
+			
+//			System.out.println("here digitExtraInfoResult : "+digitExtraInfoResult
+//					+", newDigits : "+newDigits+", currentNoOfMoves : "+currentNoOfMoves);
+			
+			currentNoOfMoves = digitExtraInfoResult.getCurrentNoOfMoves();
+			noOfBarsRemoved += digitExtraInfoResult.getNoOfBarsRemoved();
+			newDigits = digitExtraInfoResult.getDigits();
+			
+//			System.out.println("2 here digitExtraInfoResult : "+digitExtraInfoResult
+//					+", newDigits : "+newDigits+", currentNoOfMoves : "+currentNoOfMoves);
+			
+			if(currentNoOfMoves == 0 && noOfBarsRemoved%2 == 0){
+				return getMaxDigits(newDigits, noOfBarsRemoved);
 			}
-		} else if(currentNoOfMoves > 0 && currentNoOfMoves <= 2) {
 			
-			boolean startExtraDigitWithSeven = noOfBarsRemoved%2 != 0;
-			
-			if(isDigitAllOnes(newDigits)){
-				return getMaxDigits(newDigits, noOfBarsRemoved, startExtraDigitWithSeven );
-			}
-			
-			List<Digits> allPermutations = getAllPermutations(newDigits, currentNoOfMoves, 1);
-			
-			Digits highest;
-			
-			if(allPermutations.isEmpty()){
-				highest = newDigits;
+			if(currentNoOfMoves == 0){
+				return handleCompleteNumberOfMoves(noOfBarsRemoved, newDigits);
+			} else if(currentNoOfMoves > 0 && currentNoOfMoves <= 2) {
+				return getDigitForOneOrTwoMovesRemaining(currentNoOfMoves, noOfBarsRemoved, newDigits);
 			} else {
-				Digits highestPermutableDigit = allPermutations.get(0);
+		
+				if(isDigitAllOnes(newDigits)){
+					currentNoOfMoves = 0;
+					continue;
+				}
 				
-				if(highestPermutableDigit.compareTo(newDigits) > 0){
-					highest = highestPermutableDigit;
-				} else {
-					highest = newDigits;
+				for(int x = 0; x < newDigits.getDigitCount(); x++){
+					SingleDigit singleDigit = newDigits.getSingleDigit(x);
+					
+					if(singleDigit.getCharValue() == '2' || singleDigit.getCharValue() == '5'){
+						
+						currentNoOfMoves -= 3;
+						noOfBarsRemoved += 2;
+						
+						singleDigit.reInit(7);
+						
+						break;
+					}
 				}
 			}
-			
-			if(noOfBarsRemoved%2 == 0){
-				return getMaxDigits(highest, noOfBarsRemoved);
-			} else {
-				DigitExtraInfoResult additionIncreasedDigit = increaseDigitByAdditionOrRearranging(newDigits, 1);
-				
-				Digits increasedDigits = additionIncreasedDigit.getDigits();
+		}
+	}
 
-				return getMaxDigits(increasedDigits, noOfBarsRemoved, !additionIncreasedDigit.isAltered());
-			}
+	private Digits getDigitForOneOrTwoMovesRemaining(int currentNoOfMoves, int noOfBarsRemoved, Digits newDigits) {
+		
+		List<Digits> allPermutations = getAllPermutations(newDigits, currentNoOfMoves, 1);
+		
+		Digits highest;
+		
+		if(allPermutations.isEmpty()){
+			highest = newDigits;
 		} else {
-	
-			boolean startExtraDigitWithSeven = noOfBarsRemoved%2 != 0;
+			Digits highestPermutableDigit = allPermutations.get(0);
 			
-			if(isDigitAllOnes(newDigits)){
-				return getMaxDigits(newDigits, noOfBarsRemoved, startExtraDigitWithSeven );
+			if(highestPermutableDigit.compareTo(newDigits) > 0){
+				highest = highestPermutableDigit;
+			} else {
+				highest = newDigits;
 			}
-			
-			
-			
 		}
 		
-		return null;
+//		System.out.println("highest : "+highest+", newDigits : "+newDigits+"");
+		
+		if(noOfBarsRemoved%2 == 0){
+			return getMaxDigits(highest, noOfBarsRemoved);
+		} else {
+			DigitExtraInfoResult additionIncreasedDigit = increaseDigitByAdditionOrRearranging(newDigits, 1);
+			
+			Digits increasedDigits = additionIncreasedDigit.getDigits();
+
+			return getMaxDigits(increasedDigits, noOfBarsRemoved, !additionIncreasedDigit.isAltered());
+		}
+	}
+	
+	private Digits handleCompleteNumberOfMoves(int noOfBarsRemoved, Digits newDigits) {
+		if(noOfBarsRemoved%2 == 0){
+			return getMaxDigits(newDigits, noOfBarsRemoved);
+		} else {
+			DigitExtraInfoResult additionIncreasedDigit = increaseDigitByAdditionOrRearranging(newDigits, 1);
+
+			Digits increasedDigits = additionIncreasedDigit.getDigits();
+
+			return getMaxDigits(increasedDigits, noOfBarsRemoved, !additionIncreasedDigit.isAltered());
+		}
 	}
 
 	public boolean isDigitAllOnes(Digits digits) {
@@ -267,7 +290,6 @@ public class DigitCoreHandler {
 			singleDigit.reInit(maxValue);
 			altered = true;
 			
-			
 		}
 		
 		DigitExtraInfoResult digitExtraInfoResult = new DigitExtraInfoResult();
@@ -309,22 +331,27 @@ public class DigitCoreHandler {
 			
 			int value = singleDigit.getValue();
 			
-			if(digitRemovalNavigatorUtil.canBeMovedToFormHigherNumber(value)){
+			int[][] possibleDigitsViaRemoval;
+			
+			boolean lastDigit = x == (digitCount - 1);
+			
+			if(lastDigit){
+				possibleDigitsViaRemoval = digitRemovalNavigatorUtil.getPossibleDigitsViaRemovalOrderedByNoOfBarsDesc(value);
+			} else {
+				possibleDigitsViaRemoval = digitRemovalNavigatorUtil.getPossibleDigitsViaRemoval(value);
+			}
+			
+			for (int i = 0; i < possibleDigitsViaRemoval.length; i++) {
+				int[] js = possibleDigitsViaRemoval[i]; 
 				
-				int[][] possibleDigitsViaRemoval = digitRemovalNavigatorUtil.getPossibleDigitsViaRemoval(value);
+				int newDigitFormed = js[0];
+				int noOfBarsDeletionRequired = js[1];
 				
-				for (int i = 0; i < possibleDigitsViaRemoval.length; i++) {
-					int[] js = possibleDigitsViaRemoval[i]; 
-					
-					int newDigitFormed = js[0];
-					int noOfBarsDeletionRequired = js[1];
-					
-					if(noOfBarsDeletionRequired <= currentNoOfMoves && newDigitFormed > value){
-						currentNoOfMoves -= noOfBarsDeletionRequired;
-						noOfBarsRemoved += noOfBarsDeletionRequired;
-						singleDigit.reInit(newDigitFormed);
-						break;
-					}
+				if(noOfBarsDeletionRequired <= currentNoOfMoves && (newDigitFormed > value || lastDigit)){
+					currentNoOfMoves -= noOfBarsDeletionRequired;
+					noOfBarsRemoved += noOfBarsDeletionRequired;
+					singleDigit.reInit(newDigitFormed);
+					break;
 				}
 			}
 		}
@@ -345,7 +372,7 @@ public class DigitCoreHandler {
 			
 			int value = singleDigit.getValue();
 
-			int[][] possibleDigitsViaRemoval = digitRemovalNavigatorUtil.getPossibleDigitsViaRemoval(value);
+			int[][] possibleDigitsViaRemoval = digitRemovalNavigatorUtil.getPossibleDigitsViaRemovalOrderedByNoOfBarsDesc(value);
 			
 			for (int i = 0; i < possibleDigitsViaRemoval.length; i++) {
 				int[] js = possibleDigitsViaRemoval[i]; 

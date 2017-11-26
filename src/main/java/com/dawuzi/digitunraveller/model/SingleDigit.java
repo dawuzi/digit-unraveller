@@ -214,6 +214,14 @@ public class SingleDigit implements Comparable<SingleDigit> {
 		return true;
 	}
 
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return getCharValue()+"";
+	}
+
 	public static void main(String[] args) {
 		for(int x=0; x<10; x++){
 			SingleDigit singleDigit = new SingleDigit(x);

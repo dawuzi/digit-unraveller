@@ -14,6 +14,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import com.dawuzi.digitunraveller.model.Digits;
+import com.dawuzi.digitunraveller.model.SingleDigit;
+import com.dawuzi.digitunraveller.pojos.DigitExtraInfoResult;
 
 /**
  * @author DAWUZI
@@ -27,22 +29,364 @@ public class DigitCoreHandler {
 	public Map<String, List<Digits>> permutationsMemoryParallel = new ConcurrentHashMap<>();
 	public Map<String, List<Digits>> permutationsMemoryParallelIncludingInvalids = new ConcurrentHashMap<>();
 	
+	public Long getHighestViaDigitRemoval(long value, int noOfMoves){
+		Digits digits = getHighestDigitsViaDeletion(new Digits(value), noOfMoves);
+		return digits.getValue();
+	}
+//	
+//	public Set<Long> getHighestViaDigitRemoval(int value, int noOfMoves, int resultCount) {
+//		
+//		int noOfPossibleExtraDigits = getNoOfPossibleExtraDigits(value, noOfMoves);
+//		
+//		int noOfOnesThatCanBeFormed = 2 * noOfPossibleExtraDigits;
+//		
+//		Digits startDigits = new Digits(value);
+//		
+//		List<Digits> digits = getHighestDigitsViaDeletion(startDigits, noOfMoves);
+//		
+//		TreeSet<Long> result = new TreeSet<>(Collections.reverseOrder());
+//		
+//		int size = digits.size();
+//		
+//		for(int x=0; x<size; x++){
+//			result.add(digits.get(x).getValue());
+//		}
+//		
+//		return result;
+//	}
+
+	private Digits getHighestDigitsViaDeletion(Digits digits, int noOfMoves) {
+
+		String rawBinaryStringValue = digits.getRawBinaryStringValue();
+		
+		if(isDigitAllOnes(digits)){
+			return digits;
+		}
+		
+		DigitExtraInfoResult digitExtraInfoResult = getMaxResultViaDeletionForwardDirection(digits, noOfMoves);
+		
+		System.out.println("here digitExtraInfoResult : "+digitExtraInfoResult);
+		
+		int currentNoOfMoves = digitExtraInfoResult.getCurrentNoOfMoves();
+		int noOfBarsRemoved = digitExtraInfoResult.getNoOfBarsRemoved();
+		Digits newDigits = digitExtraInfoResult.getDigits();
+		
+		if(currentNoOfMoves == 0 && noOfBarsRemoved%2 == 0){
+			return getMaxDigits(newDigits, noOfBarsRemoved);
+		}
+		
+		if(currentNoOfMoves == 0){
+			if(noOfBarsRemoved%2 == 0){
+				return getMaxDigits(newDigits, noOfBarsRemoved);
+			} else {
+				DigitExtraInfoResult additionIncreasedDigit = increaseDigitByAdditionOrRearranging(newDigits, 1);
+				
+				Digits increasedDigits = additionIncreasedDigit.getDigits();
+
+				return getMaxDigits(increasedDigits, noOfBarsRemoved, !additionIncreasedDigit.isAltered());
+			}
+		} else if(currentNoOfMoves > 0 && currentNoOfMoves <= 2) {
+			
+			boolean startExtraDigitWithSeven = noOfBarsRemoved%2 != 0;
+			
+			if(isDigitAllOnes(newDigits)){
+				return getMaxDigits(newDigits, noOfBarsRemoved, startExtraDigitWithSeven );
+			}
+			
+			List<Digits> allPermutations = getAllPermutations(newDigits, currentNoOfMoves, 1);
+			
+			Digits highest;
+			
+			if(allPermutations.isEmpty()){
+				highest = newDigits;
+			} else {
+				Digits highestPermutableDigit = allPermutations.get(0);
+				
+				if(highestPermutableDigit.compareTo(newDigits) > 0){
+					highest = highestPermutableDigit;
+				} else {
+					highest = newDigits;
+				}
+			}
+			
+			if(noOfBarsRemoved%2 == 0){
+				return getMaxDigits(highest, noOfBarsRemoved);
+			} else {
+				DigitExtraInfoResult additionIncreasedDigit = increaseDigitByAdditionOrRearranging(newDigits, 1);
+				
+				Digits increasedDigits = additionIncreasedDigit.getDigits();
+
+				return getMaxDigits(increasedDigits, noOfBarsRemoved, !additionIncreasedDigit.isAltered());
+			}
+		} else {
 	
-	public Integer getHighestValueIncludingFormationOfNewDigit(int value, int noOfMoves){
-		Set<Integer> results = getHighestValueIncludingFormationOfNewDigit(value, noOfMoves, 1);
+			boolean startExtraDigitWithSeven = noOfBarsRemoved%2 != 0;
+			
+			if(isDigitAllOnes(newDigits)){
+				return getMaxDigits(newDigits, noOfBarsRemoved, startExtraDigitWithSeven );
+			}
+			
+			
+			
+		}
+		
+		return null;
+	}
+
+	public boolean isDigitAllOnes(Digits digits) {
+		
+		boolean isAllOnes = true;
+		int digitCount = digits.getDigitCount();
+		
+		for(int x = 0; x < digitCount; x++){
+			SingleDigit singleDigit = digits.getSingleDigit(x);
+			
+			if(singleDigit.getCharValue() != '1'){
+				isAllOnes = false;
+				break;
+			}
+		}
+		
+		return isAllOnes;
+	}
+	
+	private Digits getMaxDigits(Digits digits, int noOfBarsRemoved) {
+		return getMaxDigits(digits, noOfBarsRemoved, false);
+	}
+	
+	private Digits getMaxDigits(Digits digits, int noOfBarsRemoved, boolean startWithSeven) {
+		StringBuffer buffer = new StringBuffer();
+		int maxLoopCount = noOfBarsRemoved / 2; //it requires two digit to form 1
+		
+		for(int x=0; x<maxLoopCount; x++){
+			if(x == 0 && startWithSeven){
+				buffer.append('7');
+			} else {
+				buffer.append('1');
+			}
+		}
+		
+		String maxValue = digits.getValue() + "" + buffer.toString();
+		
+		Digits maxDigits = new Digits(maxValue);
+		
+		return maxDigits;
+	}
+
+	public DigitExtraInfoResult increaseDigitByAdditionOrRearranging(Digits digits, int noOfAdditionsOrRearrangements) {
+		
+		DigitRemovalNavigatorUtil digitRemovalNavigatorUtil = new DigitRemovalNavigatorUtil();
+		
+		int digitCount = digits.getDigitCount();
+		
+		String rawBinaryStringValue = digits.getRawBinaryStringValue();
+		
+		boolean altered = false;
+		
+		digits = new Digits();
+		
+		digits.initViaRawBinaryString(rawBinaryStringValue);
+		
+		for(int x=0; x<digitCount; x++){
+			
+			if(noOfAdditionsOrRearrangements < 0){
+				throw new IllegalStateException("noOfAdditionsOrRearrangements should never be negative : "+noOfAdditionsOrRearrangements);
+			}
+			
+			if(noOfAdditionsOrRearrangements == 0){
+				break;
+			}
+			
+			SingleDigit singleDigit = digits.getSingleDigit(x);
+			
+			int value = singleDigit.getValue();
+			
+			int[][] possibleDigitsViaAddition = digitRemovalNavigatorUtil.getPossibleDigitsViaAddition(value);
+			int[][] possibleDigitsViaRearranging = digitRemovalNavigatorUtil.getPossibleDigitsViaRearranging(value);
+			
+			int maxValueViaAddition = -1;
+			int noOfStepsViaAddition = -1;
+			
+			int maxValueViaRearranging = -1;
+			int noOfStepsViaRearranging = -1;
+			
+			for (int i = 0; i < possibleDigitsViaRearranging.length; i++) {
+				int[] js = possibleDigitsViaRearranging[i];
+				
+				int newDigitFormed = js[0];
+				int noOfSteps = js[1];
+				
+				if(newDigitFormed > value && noOfSteps <= noOfAdditionsOrRearrangements){
+					maxValueViaRearranging = newDigitFormed;
+					noOfStepsViaRearranging = noOfSteps;
+					break;
+				}
+			}
+			
+			for (int i = 0; i < possibleDigitsViaAddition.length; i++) {
+				int[] js = possibleDigitsViaAddition[i];
+				
+				int newDigitFormed = js[0];
+				int noOfSteps = js[1];
+				
+				if(newDigitFormed > value && noOfSteps <= noOfAdditionsOrRearrangements){
+					maxValueViaAddition = newDigitFormed;
+					noOfStepsViaAddition = noOfSteps;
+					break;
+				}
+			}
+			
+			if(maxValueViaAddition < 0 && maxValueViaRearranging < 0){
+				continue;
+			}
+			
+			int maxValue = Math.max(maxValueViaAddition, maxValueViaRearranging);
+			
+			if(maxValue <= value){
+				continue;
+			}
+			
+			int noOfStepsTaken;
+			
+			if(maxValueViaAddition == maxValueViaRearranging){
+				noOfStepsTaken = Math.min(noOfStepsViaRearranging, noOfStepsViaAddition);
+			} else if(maxValueViaAddition > maxValueViaRearranging) {
+				noOfStepsTaken = noOfStepsViaAddition;
+			} else {
+				noOfStepsTaken = noOfStepsViaRearranging;
+			}
+			
+			noOfAdditionsOrRearrangements -= noOfStepsTaken;
+
+//			System.out.println("singleDigit : "+singleDigit+", maxValueViaRearranging : "+maxValueViaRearranging
+//					+", maxValueViaAddition : "+maxValueViaAddition+", maxValue : "+maxValue
+//					+", noOfStepsTaken : "+noOfStepsTaken+", noOfStepsViaAddition : "+noOfStepsViaAddition
+//					+", noOfStepsViaRearranging : "+noOfStepsViaRearranging
+//					+", noOfAdditionsOrRearrangements : "+noOfAdditionsOrRearrangements);
+			
+			singleDigit.reInit(maxValue);
+			altered = true;
+			
+			
+		}
+		
+		DigitExtraInfoResult digitExtraInfoResult = new DigitExtraInfoResult();
+		
+		digitExtraInfoResult.setAltered(altered);
+		digitExtraInfoResult.setDigits(digits);
+		digitExtraInfoResult.setNoOfStepsLeft(noOfAdditionsOrRearrangements);
+		
+		return digitExtraInfoResult;
+	}
+
+	private DigitExtraInfoResult getMaxResultViaDeletionForwardDirection(Digits digits, int noOfMoves) {
+
+//		System.out.println("digits value : "+digits.getValue()+", noOfAdditionsOrRearrangements : "+noOfMoves);
+		
+		int digitCount = digits.getDigitCount();
+		int currentNoOfMoves = noOfMoves;
+		int noOfBarsRemoved = 0;
+		
+		String rawBinaryStringValue = digits.getRawBinaryStringValue();
+		
+		digits = new Digits();
+		
+		digits.initViaRawBinaryString(rawBinaryStringValue);
+		
+		DigitRemovalNavigatorUtil digitRemovalNavigatorUtil = new DigitRemovalNavigatorUtil();
+		
+		for(int x=0; x<digitCount; x++){
+			
+			if(currentNoOfMoves < 0){
+				throw new IllegalStateException("current no of moves should never be negative : "+currentNoOfMoves);
+			}
+
+			if(currentNoOfMoves == 0){
+				break;
+			}
+			
+			SingleDigit singleDigit = digits.getSingleDigit(x);
+			
+			int value = singleDigit.getValue();
+			
+			if(digitRemovalNavigatorUtil.canBeMovedToFormHigherNumber(value)){
+				
+				int[][] possibleDigitsViaRemoval = digitRemovalNavigatorUtil.getPossibleDigitsViaRemoval(value);
+				
+				for (int i = 0; i < possibleDigitsViaRemoval.length; i++) {
+					int[] js = possibleDigitsViaRemoval[i]; 
+					
+					int newDigitFormed = js[0];
+					int noOfBarsDeletionRequired = js[1];
+					
+					if(noOfBarsDeletionRequired <= currentNoOfMoves && newDigitFormed > value){
+						currentNoOfMoves -= noOfBarsDeletionRequired;
+						noOfBarsRemoved += noOfBarsDeletionRequired;
+						singleDigit.reInit(newDigitFormed);
+						break;
+					}
+				}
+			}
+		}
+		
+//		System.out.println("2 digits value : "+digits.getValue()+", currentNoOfMoves : "+currentNoOfMoves);
+
+		for(int x = digitCount-1; x >= 0; x--){
+			
+			if(currentNoOfMoves < 0){
+				throw new IllegalStateException("current no of moves should never be negative : "+currentNoOfMoves);
+			}
+			
+			if(currentNoOfMoves == 0){
+				break;
+			}
+			
+			SingleDigit singleDigit = digits.getSingleDigit(x);
+			
+			int value = singleDigit.getValue();
+
+			int[][] possibleDigitsViaRemoval = digitRemovalNavigatorUtil.getPossibleDigitsViaRemoval(value);
+			
+			for (int i = 0; i < possibleDigitsViaRemoval.length; i++) {
+				int[] js = possibleDigitsViaRemoval[i]; 
+				
+				int newDigitFormed = js[0];
+				int noOfBarsDeletionRequired = js[1];
+				
+				if(noOfBarsDeletionRequired <= currentNoOfMoves){
+					currentNoOfMoves -= noOfBarsDeletionRequired;
+					noOfBarsRemoved += noOfBarsDeletionRequired;
+					singleDigit.reInit(newDigitFormed);
+					break;
+				}
+			}
+		}
+		
+		DigitExtraInfoResult digitExtraInfoResult = new DigitExtraInfoResult();
+			
+		digitExtraInfoResult.setCurrentNoOfMoves(currentNoOfMoves);
+		digitExtraInfoResult.setDigits(digits);
+		digitExtraInfoResult.setNoOfBarsRemoved(noOfBarsRemoved);
+
+		return digitExtraInfoResult;
+		
+	}
+
+	public Long getHighestValueIncludingFormationOfNewDigit(long value, int noOfMoves){
+		Set<Long> results = getHighestValueIncludingFormationOfNewDigit(value, noOfMoves, 1);
 		if(results == null || results.isEmpty()){
 			return null;
 		}
 		return results.iterator().next();
 	}
 	
-	public Set<Integer> getHighestValueIncludingFormationOfNewDigit(int value, int noOfMoves, int resultCount){
+	public Set<Long> getHighestValueIncludingFormationOfNewDigit(long value, int noOfMoves, int resultCount){
 		
 		String blanksInFrontValue = getBlankString(value, noOfMoves);
 		
 		List<Digits> digits = getAllPermutations(new Digits(blanksInFrontValue), noOfMoves, resultCount);
 		
-		TreeSet<Integer> result = new TreeSet<>(Collections.reverseOrder());
+		TreeSet<Long> result = new TreeSet<>(Collections.reverseOrder());
 		
 		int size = digits.size();
 		
@@ -53,15 +397,15 @@ public class DigitCoreHandler {
 		return result;
 	}
 
-	public Integer getHighestValue(int value, int noOfMovements){
-		Set<Integer> highestValues = getHighestValues(value, noOfMovements, 1);
+	public Long getHighestValue(int value, int noOfMovements){
+		Set<Long> highestValues = getHighestValues(value, noOfMovements, 1);
 		if(highestValues.isEmpty()){
 			return null;
 		}
 		return highestValues.iterator().next();
 	}
 	
-	public Set<Integer> getHighestValues(int value, int noOfMovements, int resultCount){
+	public Set<Long> getHighestValues(int value, int noOfMovements, int resultCount){
 		
 		String blanksInFrontValue = getBlankString(value, noOfMovements);
 		
@@ -72,8 +416,22 @@ public class DigitCoreHandler {
 		return getBlankString(value, Integer.MAX_VALUE);
 	}
 	
-	public String getBlankString(int value, int noOfMovements) {
+	public String getBlankString(long value, int noOfMovements) {
+
+		int targetBlankValue = getNoOfPossibleExtraDigits(value, noOfMovements);
 		
+		StringBuffer buffer = new StringBuffer();
+		
+		for(int x=0; x<targetBlankValue; x++){
+			buffer.append(' ');
+		}
+		
+		buffer.append(value);
+		
+		return buffer.toString();
+	}
+
+	private int getNoOfPossibleExtraDigits(long value, int noOfMoves) {
 		Digits digits = new Digits(value);
 		
 		int y = 0;
@@ -88,24 +446,16 @@ public class DigitCoreHandler {
 		int count = y / 2;
 		
 		int noOfPrependedBlanks = count - digits.getDigitCount();
-		int maxOfBlankSpaces = noOfMovements / 2;
+		int maxOfBlankSpaces = noOfMoves / 2;
 		
 		int targetBlankValue = Math.min(noOfPrependedBlanks, maxOfBlankSpaces);
 		
-		StringBuffer buffer = new StringBuffer();
-		
-		for(int x=0; x<targetBlankValue; x++){
-			buffer.append(' ');
-		}
-		
-		buffer.append(value);
-		
-		return buffer.toString();
+		return targetBlankValue;
 	}
 
-	private TreeSet<Integer> getHighestValues(Digits digits, int noOfMovements, int resultCount) {
+	private TreeSet<Long> getHighestValues(Digits digits, int noOfMovements, int resultCount) {
 		
-		TreeSet<Integer> results = new TreeSet<>(Collections.reverseOrder());
+		TreeSet<Long> results = new TreeSet<>(Collections.reverseOrder());
 		
 		if(noOfMovements == 0){
 			return results;
@@ -115,7 +465,7 @@ public class DigitCoreHandler {
 			
 			List<Digits> digitPermutations = getAllPermutations(digits);
 			
-			Set<Integer> values = digitPermutations.stream().map(d -> d.getValue()).collect(Collectors.toSet());
+			Set<Long> values = digitPermutations.stream().map(d -> d.getValue()).collect(Collectors.toSet());
 			
 			return combinedResult(results, values, resultCount);
 		}
@@ -128,7 +478,7 @@ public class DigitCoreHandler {
 		
 		if(digitPermutations.size() == 1){
 			
-			TreeSet<Integer> values = getHighestValues(digitPermutations.get(0), 
+			TreeSet<Long> values = getHighestValues(digitPermutations.get(0), 
 					noOfMovements - 1, resultCount);
 			
 			return combinedResult(results, values, resultCount);
@@ -137,13 +487,13 @@ public class DigitCoreHandler {
 		
 		Digits firstDigit = digitPermutations.get(0);
 
-		CompletableFuture<TreeSet<Integer>> firstDigitFuture = CompletableFuture.supplyAsync(
+		CompletableFuture<TreeSet<Long>> firstDigitFuture = CompletableFuture.supplyAsync(
 				() -> {
 					return getHighestValues(firstDigit, 
 							noOfMovements - 1, resultCount);
 				});
 		
-		CompletableFuture<TreeSet<Integer>> allResultsFuture = firstDigitFuture;
+		CompletableFuture<TreeSet<Long>> allResultsFuture = firstDigitFuture;
 
 		int size = digitPermutations.size();
 		
@@ -151,7 +501,7 @@ public class DigitCoreHandler {
 			
 			Digits currentDigit = digitPermutations.get(x);
 			
-			CompletableFuture<TreeSet<Integer>> currentDigitFuture = CompletableFuture.supplyAsync(
+			CompletableFuture<TreeSet<Long>> currentDigitFuture = CompletableFuture.supplyAsync(
 					() -> {
 						return getHighestValues(currentDigit, 
 								noOfMovements - 1, resultCount);
@@ -165,7 +515,7 @@ public class DigitCoreHandler {
 					});
 		}
 		
-		TreeSet<Integer> values;
+		TreeSet<Long> values;
 		
 		try {
 			values = allResultsFuture.get();
@@ -176,7 +526,7 @@ public class DigitCoreHandler {
 		return combinedResult(results, values, resultCount);
 	}
 
-	private TreeSet<Integer> combinedResult(TreeSet<Integer> results, Collection<Integer> values, int resultCount) {
+	private TreeSet<Long> combinedResult(TreeSet<Long> results, Collection<Long> values, int resultCount) {
 		results.addAll(values);
 		
 		purgeCurrentResults(results, resultCount);
@@ -249,7 +599,7 @@ public class DigitCoreHandler {
 					if(noOfMoves == 1){
 						if(digits.getValue() >= 0){
 							
-							List<Digits> allValidRotations = getAllValidRotations(digits, noOfBlanks);
+//							List<Digits> allValidRotations = getAllValidRotations(digits, noOfBlanks);
 							
 							resultValueStrings.add(digits.getRawBinaryStringValue());
 						} 
@@ -426,16 +776,16 @@ public class DigitCoreHandler {
 		}
 	}
 
-	private void purgeCurrentResults(TreeSet<Integer> results, int resultCount) {
+	private void purgeCurrentResults(TreeSet<Long> results, int resultCount) {
 		if(results.size() <= resultCount){
 			return;
 		}
 		
 		int x = 0;
 		
-		Integer lastItem = null;
+		Long lastItem = null;
 		
-		for(Integer val : results){
+		for(Long val : results){
 			x++;
 			if(x == resultCount){
 				lastItem = val;
@@ -456,7 +806,7 @@ public class DigitCoreHandler {
 		
 		DigitCoreHandler coreHandler = new DigitCoreHandler();
 		
-		Integer highestValue = coreHandler.getHighestValue(5008, 2);
+		Long highestValue = coreHandler.getHighestValue(5008, 2);
 		
 		System.out.println(highestValue);
 	}
@@ -466,17 +816,17 @@ public class DigitCoreHandler {
 		
 		DigitCoreHandler coreHandler = new DigitCoreHandler();
 		
-		TreeSet<Integer> vals = coreHandler.getHighestValues(digits, 2, 20);
+		TreeSet<Long> vals = coreHandler.getHighestValues(digits, 2, 20);
 		
 		System.out.println(vals);
 	}
 	
 	public static void test3() {
 		
-		TreeSet<Integer> intSet = new TreeSet<>(Collections.reverseOrder()); 
+		TreeSet<Long> intSet = new TreeSet<>(Collections.reverseOrder()); 
 		
 		for(int x=0; x<21; x++){
-			intSet.add(x);
+			intSet.add(Long.valueOf(x+""));
 		}
 		
 		System.out.println(intSet);
@@ -488,12 +838,12 @@ public class DigitCoreHandler {
 		System.out.println(intSet);
 	}	
 	public static void test2() {
-		TreeSet<Integer> intSet = new TreeSet<>(Collections.reverseOrder()); 
+		TreeSet<Long> intSet = new TreeSet<>(Collections.reverseOrder()); 
 		
 		for(int x=0; x<21; x++){
-			intSet.add(x);
+			intSet.add(Long.valueOf(x+""));
 			
-			for(Integer z : intSet){
+			for(Long z : intSet){
 				System.out.println(z);
 			}
 			

@@ -14,7 +14,7 @@ public class Digits implements Comparable<Digits> {
 	public Digits(){
 	}
 
-	public Digits(int value) {
+	public Digits(long value) {
 		initDigits(value);
 	}
 
@@ -57,11 +57,11 @@ public class Digits implements Comparable<Digits> {
 		}
 	}
 	
-	private void initDigits(int value) {
+	private void initDigits(long value) {
 		initDigits(String.valueOf(value));
 	}
 	
-	public int getValue(){
+	public long getValue(){
 		
 		String stringValue = getStringValue();
 		
@@ -73,7 +73,7 @@ public class Digits implements Comparable<Digits> {
 			return -1;
 		}
 		
-		return Integer.parseInt(stringValue);
+		return Long.parseLong(stringValue);
 	}
 	
 	public String getStringValue(){
@@ -193,7 +193,20 @@ public class Digits implements Comparable<Digits> {
 		if(o == null){
 			return -1;
 		}
-		return getValue() - o.getValue();
+		
+		long val = getValue() - o.getValue();
+		
+		int compareTo;
+		
+		if(val == 0){
+			compareTo = 0;
+		} else if(val > 0){
+			compareTo = 1;
+		} else {
+			compareTo = -1;
+		}
+		
+		return compareTo;
 	}
 	
 	@Override

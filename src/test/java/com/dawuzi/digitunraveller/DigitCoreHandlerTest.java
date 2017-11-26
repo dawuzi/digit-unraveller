@@ -176,48 +176,6 @@ public class DigitCoreHandlerTest {
 	}
 	
 	@Test
-	public void testGetHighestValuesViaDeletion(){
-		
-		DigitCoreHandler digitCoreHandler = new DigitCoreHandler();
-		
-		int[][] testCases = {
-				{838, 4, 979},
-				{396740, 10, 795111},
-				{46, 3, 751},
-				{5008, 2, 50051},
-				{2, 2, 5},
-				{8, 4, 711},
-				{8, 5, 711},
-				{8, 6, 711},
-				{8, 7, 711},
-				{8, 8, 711},
-				{8, 9, 711},
-				{46, 4, 751},
-				{46, 5, 751},
-				{46, 6, 751},
-//				{5008, 2, 751},
-		};
-		
-		System.out.println("testcase length : "+testCases.length);
-		
-		for(int x=0; x<testCases.length; x++){
-			
-			int[] testCase = testCases[x];
-			
-			int value = testCase[0];
-			int noOfMoves = testCase[1];
-			
-			Long highestViaDigitRemoval = digitCoreHandler.getHighestViaDigitRemoval(value, noOfMoves);
-			
-			System.out.println("x : "+x+", value : "+value+", noOfMoves : "+noOfMoves+", highest : "+highestViaDigitRemoval);
-		}
-		
-		Assert.assertTrue(true);
-		
-		
-	}	
-	
-//	@Test
 	@SuppressWarnings("unused")
 	public void testGetHighestValuesByAdditionOrRearrangement(){
 		
@@ -276,4 +234,48 @@ public class DigitCoreHandlerTest {
 			System.out.println("j : "+j+", is all ones : "+digitCoreHandler.isDigitAllOnes(new Digits(j)));
 		}
 	}	
+	
+	@Test
+	public void testGetHighestValuesViaDeletion(){
+		
+		DigitCoreHandler digitCoreHandler = new DigitCoreHandler();
+		
+		long[][] testCases = {
+				{838, 4, 97911},
+				{46, 3, 751},
+				{5008, 2, 50051},
+				{2, 2, 5},
+				{8, 4, 711},
+				{8, 5, 711},
+				{8, 6, 711},
+				{8, 7, 711},
+				{8, 8, 711},
+				{8, 9, 711},
+				{46, 4, 751},
+				{46, 5, 751},
+				{46, 6, 7711},
+//				{5008, 2, 751},
+		};
+		
+		for(int x=0; x<testCases.length; x++){
+			
+			long[] testCase = testCases[x];
+			
+			long value = testCase[0];
+			int noOfMoves = (int) testCase[1];
+			long expected = testCase[2];
+			
+			Long actualInteger = digitCoreHandler.getHighestViaDigitRemoval(value, noOfMoves);
+			long actual = 0;
+			
+			if(actualInteger != null){
+				actual = actualInteger;
+			}
+
+			Assert.assertEquals(expected, actual);
+			
+//			System.out.println("x : "+x+", value : "+value+", noOfMoves : "+noOfMoves+", actualInteger : "+actualInteger);
+		}
+	}	
+	
 }

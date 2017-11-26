@@ -143,6 +143,21 @@ public class SingleDigit implements Comparable<SingleDigit> {
 		return -1;
 	}
 	
+	public char getCharValue(){
+		
+		if(isBlank()){
+			return ' ';
+		}
+		
+		int value = getValue();
+		
+		if(value >= 0){
+			return Character.forDigit(value, 10);
+		}
+		
+		return '&';
+	}
+	
 	public String getRawBinaryStringValue(){
 		int value = getValue();
 		
@@ -197,6 +212,14 @@ public class SingleDigit implements Comparable<SingleDigit> {
 		if (!Arrays.equals(digitDescription, other.digitDescription))
 			return false;
 		return true;
+	}
+
+	/* (non-Javadoc)
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return getCharValue()+"";
 	}
 
 	public static void main(String[] args) {
